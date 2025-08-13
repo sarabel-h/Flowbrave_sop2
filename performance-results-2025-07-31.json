@@ -1,0 +1,167 @@
+{
+  "timestamp": "2025-07-31T14:25:32.712Z",
+  "totalRequests": 25,
+  "successfulRequests": 0,
+  "failedRequests": 25,
+  "responseTimes": [],
+  "errors": [
+    {
+      "query": "Comment créer un nouveau SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 5274.0876
+    },
+    {
+      "query": "Quelles sont les étapes pour l'onboarding?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 4033.6588
+    },
+    {
+      "query": "Comment gérer les permissions utilisateur?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 4789.353300000001
+    },
+    {
+      "query": "Qu'est-ce qu'un SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 4255.420300000002
+    },
+    {
+      "query": "Comment modifier un SOP existant?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 5622.0628
+    },
+    {
+      "query": "Comment créer un nouveau SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 3434.3755999999994
+    },
+    {
+      "query": "Quelles sont les étapes pour l'onboarding?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 3350.0013000000035
+    },
+    {
+      "query": "Comment gérer les permissions utilisateur?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2867.714500000002
+    },
+    {
+      "query": "Qu'est-ce qu'un SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 3015.3429000000033
+    },
+    {
+      "query": "Comment modifier un SOP existant?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2659.1471999999994
+    },
+    {
+      "query": "Comment créer un nouveau SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 3001.894100000005
+    },
+    {
+      "query": "Quelles sont les étapes pour l'onboarding?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2774.532600000006
+    },
+    {
+      "query": "Comment gérer les permissions utilisateur?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2798.474199999997
+    },
+    {
+      "query": "Qu'est-ce qu'un SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 3306.4562999999907
+    },
+    {
+      "query": "Comment modifier un SOP existant?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2664.6331000000064
+    },
+    {
+      "query": "Comment créer un nouveau SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2674.586500000005
+    },
+    {
+      "query": "Quelles sont les étapes pour l'onboarding?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 3630.7820999999967
+    },
+    {
+      "query": "Comment gérer les permissions utilisateur?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2652.2156000000105
+    },
+    {
+      "query": "Qu'est-ce qu'un SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2749.4489999999932
+    },
+    {
+      "query": "Comment modifier un SOP existant?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2735.015299999999
+    },
+    {
+      "query": "Comment créer un nouveau SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2747.1079000000027
+    },
+    {
+      "query": "Quelles sont les étapes pour l'onboarding?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2646.941500000001
+    },
+    {
+      "query": "Comment gérer les permissions utilisateur?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2721.4517999999953
+    },
+    {
+      "query": "Qu'est-ce qu'un SOP?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2881.2580000000016
+    },
+    {
+      "query": "Comment modifier un SOP existant?",
+      "status": 500,
+      "error": "{\"error\":\"Failed to generate chat response\"}",
+      "duration": 2685.729299999992
+    }
+  ],
+  "detailedMetrics": {
+    "min": 0,
+    "max": 0,
+    "average": 0,
+    "median": 0,
+    "p95": 0,
+    "p99": 0
+  }
+}

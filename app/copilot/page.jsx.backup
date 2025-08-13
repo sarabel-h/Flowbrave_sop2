@@ -1,0 +1,254 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Send } from "lucide-react"
+import AppSidebar from "@/components/AppSidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
+import ReactMarkdown from 'react-markdown'
+import useAuth from "@/components/auth"
+import { getRole } from "../../lib/access-control"
+import remarkBreaks from 'remark-breaks';
+import TrialDialog from "@/components/TrialDialog";
+import BillingCheck from "@/components/BillingCheck";
+import Loading from "@/components/Loading"
+
+function ChatMessage({ message, type, sources = [] }) {
+  console.log("MESSAGE", message);
+  return (
+    <div className={`mb-4 flex ${type === 'user' ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[80%] text-sm rounded-lg p-3 ${type === 'user' ? "bg-black text-white" : "bg-gray-100 text-gray-800"}`}>
+        <ReactMarkdown remarkPlugins={[remarkBreaks]} children={message} components={{ ol: ({ className, ...props }) => <ol className={`${className || ''} ms-4 my-5 space-y-5`} {...props}></ol> }} />
+        
+        {/* Related SOPs pills */}
+        {type === 'ai' && sources && sources.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <div className="text-xs text-gray-500 mb-1">Related SOPs:</div>
+            <div className="flex flex-wrap gap-1">
+              {sources.map((source, idx) => (
+                <span 
+                  key={idx} 
+                  className="bg-gray-200 text-gray-800 text-xs px-2 py-0.5 rounded-full"
+                  title={source.title}
+                >
+                  {source.title.length > 20 ? source.title.substring(0, 20) + '...' : source.title}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SearchResult({ result }) {
+  return (
+    <div className="border rounded-lg p-3 mb-2 hover:bg-gray-50">
+      <h3 className="font-medium">{result.title}</h3>
+      <div className="text-sm text-gray-500 mt-1">
+        {result.content?.substring(0, 150).replace(/<[^>]*>/g, '')}...
+      </div>
+      <div className="flex gap-1 mt-2">
+        {result.tags?.map((tag, i) => (
+          <span key={i} className="bg-gray-200 text-sm px-2 py-0.5 rounded-full">
+            {tag}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function Copilot() {
+  const [query, setQuery] = useState("")
+  const [chatHistory, setChatHistory] = useState([])
+  const [searchResults, setSearchResults] = useState([])
+  const [isSearching, setIsSearching] = useState(false)
+  
+  // Get user's organization ID
+  const { user, orgRole, fallback } = useAuth({ authPage: false, shouldRedirect: true });
+  
+  const organization = user?.organizationMemberships?.[0]?.organization;
+
+  // Fetches all previous chats when the page loads
+  const fetchChats = async () => {
+    try {
+      
+      const response = await fetch(`/api/getChats?organization=${organization?.id}&user=${user?.emailAddresses[0].emailAddress}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch chats');
+      }
+  
+      const data = await response.json();
+      setChatHistory(data.chats || []);
+    } catch (error) {
+      console.error('Error fetching chats:', error);
+    }
+  };
+
+  useEffect(() => {
+
+    if (!fallback) fetchChats();
+
+  }, [fallback]);
+
+  const handleSendMessage = async () => {
+    if (!query.trim() || !organization) return
+
+    // Add user message to chat
+    const updatedHistory = [...chatHistory, { message: query, type: 'user', sources: [] }];
+    setChatHistory(updatedHistory);
+    
+    // Set searching state
+    setIsSearching(true)
+
+    console.log("orgRole", orgRole, getRole(orgRole));
+    
+    try {
+      // Call the chat API with history
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query,
+          organization: organization?.id,
+          user: user.emailAddresses[0].emailAddress,
+          role: getRole(orgRole),
+          // Include the chat history
+          history: chatHistory,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Chat request failed')
+      }
+      
+      const data = await response.json();
+      
+      // Add AI response to chat history with sources
+      setChatHistory(prev => [
+        ...prev, 
+        { 
+          message: data.response, 
+          type: 'ai',
+          sources: data.sources || []
+        }
+      ]);
+      
+      // Set search results for reference
+      setSearchResults(data.sources || []);
+      
+    } catch (error) {
+      console.error('Error chatting with SOPs:', error)
+      setChatHistory(prev => [
+        ...prev, 
+        { 
+          message: "Sorry, I encountered an error while processing your request. Please try again later.", 
+          type: 'ai',
+          sources: []
+        }
+      ])
+    } finally {
+      setIsSearching(false)
+      setQuery("")
+    }
+  }
+
+  // Add useEffect for auto-scrolling
+  useEffect(() => {
+    const chatContainer = document.querySelector('.overflow-y-auto');
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }, [chatHistory]); // Scroll when chat history changes
+
+  // Show loading state while auth is being checked
+  if (fallback) {
+    return <Loading screen={true} />;
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen bg-white w-full">
+        {/* Sidebar */}
+        <AppSidebar user={user} />
+
+        {/* Main content */}
+        <div className="flex flex-1 w-auto flex-col overflow-hidden">
+          <div className="flex-1 overflow-auto p-4 md:p-6 md:px-12">
+            <div className="flex h-full flex-col rounded-lg border">
+              <div className="flex-1 overflow-y-auto p-4">
+                
+                {/* Chat messages */}
+                {/* {console.log("chatHistory", chatHistory, chatHistory.reverse())} */}
+                {chatHistory.map((msg, index) => (
+                  <ChatMessage 
+                    key={index} 
+                    message={msg.message} 
+                    type={msg.type || 'user'} 
+                    sources={msg.sources}
+                  />
+                ))}
+                
+                {/* Loading indicator */}
+                {isSearching && (
+                  <div className="flex justify-start mb-4">
+                    <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="animate-pulse mr-2 text-sm">Thinking</div>
+                        <div className="flex space-x-1">
+                          <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Input area */}
+              <div className="border-t p-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Ask about any SOP..."
+                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                    className="flex-1"
+                    disabled={isSearching}
+                  />
+                  <Button onClick={handleSendMessage} disabled={isSearching}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  You can ask questions about all of your SOPs
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      {/* For Trial use case handling */}
+      <TrialDialog user={user} />
+
+      {/* For checking user billing status */}
+      <BillingCheck user={user} />
+
+    </SidebarProvider>
+  )
+}
+

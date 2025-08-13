@@ -1,0 +1,64 @@
+import { NextResponse } from 'next/server';
+import { generateChatResponse } from '@/lib/search';
+import { getCollection } from '@/lib/db';
+import { type } from 'os';
+
+export async function POST(request) {
+  try {
+    // Parse the request body
+    const body = await request.json();
+    const { query, organization, user, role, history = [] } = body;
+
+    console.log("Role:", role);
+    
+    // Validate input
+    if (!query || !organization) {
+      return NextResponse.json(
+        { error: 'Query and organization are required' },
+        { status: 400 }
+      );
+    }
+
+    const userMessage = {
+      type: 'user',
+      message: query,
+      organization: organization,
+      user: user,
+      createdAt: new Date(),
+    };
+    
+    // Generate chat response with history
+    const response = await generateChatResponse(query, organization, user, role, history);
+
+    const aiMessage = {
+      type: 'ai',
+      message: response.response,
+      sources: response.sources,
+      organization: organization,
+      user: user,
+      createdAt: new Date(),
+    };
+
+    // Add response to db
+    const { client, collection: chats } = await getCollection("chat");
+    const inserted = await chats.insertMany([
+      userMessage,
+      aiMessage,
+    ]);
+
+    console.log("Chat inserted:", inserted);
+    // Close the MongoDB connection
+    client.close();
+    
+    // Return the response
+    return NextResponse.json(response);
+
+  } catch (error) {
+    
+    console.error('Error in chat route:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate chat response' },
+      { status: 500 }
+    ); 
+  }
+}
