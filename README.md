@@ -18,6 +18,15 @@ npm run dev
 ```
 This will start the application in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
+### Authentication Flow
+The application now supports public sign-up without invitation:
+
+- **Sign In**: `/auth/login` - Login page for existing users
+- **Sign Up**: `/auth/signup` - Public registration page (no invitation required)
+- **Forgot Password**: `/auth/forgot-password` - Password recovery
+
+Users can freely create accounts and get a 30-day free trial automatically.
+
 ### Other Available Scripts
 - `npm run build`: Builds the application for production
 - `npm start`: Runs the built application in production mode
