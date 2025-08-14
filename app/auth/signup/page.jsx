@@ -48,7 +48,8 @@ export default function SignUpPage() {
       companySize: "",
       role: "",
       acceptTerms: false
-    }
+    },
+    mode: "onChange"
   })
   
   // Watch values for validation
@@ -197,7 +198,13 @@ export default function SignUpPage() {
                     autoComplete="given-name"
                     className={errors.firstName ? "border-red-300" : ""}
                     placeholder="John"
-                    {...register("firstName", { required: "First name is required" })}
+                    {...register("firstName", { 
+                    required: "First name is required",
+                    minLength: {
+                      value: 2,
+                      message: "First name must be at least 2 characters"
+                    }
+                  })}
                   />
                   {errors.firstName && <p className="text-xs text-red-500">{errors.firstName.message}</p>}
                 </div>
@@ -212,7 +219,13 @@ export default function SignUpPage() {
                     autoComplete="family-name"
                     className={errors.lastName ? "border-red-300" : ""}
                     placeholder="Doe"
-                    {...register("lastName", { required: "Last name is required" })}
+                    {...register("lastName", { 
+                    required: "Last name is required",
+                    minLength: {
+                      value: 2,
+                      message: "Last name must be at least 2 characters"
+                    }
+                  })}
                   />
                   {errors.lastName && <p className="text-xs text-red-500">{errors.lastName.message}</p>}
                 </div>
@@ -232,8 +245,8 @@ export default function SignUpPage() {
                   {...register("email", { 
                     required: "Email is required", 
                     pattern: {
-                      value: /\S+@\S+\.\S+/,
-                      message: "Email is invalid"
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: "Please enter a valid email address"
                     }
                   })}
                 />
@@ -251,7 +264,13 @@ export default function SignUpPage() {
                   autoComplete="organization"
                   className={errors.organization ? "border-red-300" : ""}
                   placeholder="Acme Inc."
-                  {...register("organization", { required: "Company name is required" })}
+                  {...register("organization", { 
+                    required: "Company name is required",
+                    minLength: {
+                      value: 2,
+                      message: "Company name must be at least 2 characters"
+                    }
+                  })}
                 />
                 {errors.organization && <p className="text-xs text-red-500">{errors.organization.message}</p>}
               </div>
@@ -265,6 +284,9 @@ export default function SignUpPage() {
                   onValueChange={(value) => {
                     setValue("companySize", value, { shouldValidate: true });
                   }}
+                  {...register("companySize", { 
+                    required: "Please select a company size" 
+                  })}
                 >
                   <SelectTrigger className={errors.companySize ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select company size" />
@@ -290,6 +312,9 @@ export default function SignUpPage() {
                   onValueChange={(value) => {
                     setValue("role", value, { shouldValidate: true });
                   }}
+                  {...register("role", { 
+                    required: "Please select your role" 
+                  })}
                 >
                   <SelectTrigger className={errors.role ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select your role" />
@@ -378,6 +403,9 @@ export default function SignUpPage() {
                   id="acceptTerms" 
                   checked={acceptTerms} 
                   onCheckedChange={handleCheckboxChange} 
+                  {...register("acceptTerms", { 
+                    required: "You must accept the terms and conditions" 
+                  })}
                 />
                 <label
                   htmlFor="acceptTerms"
