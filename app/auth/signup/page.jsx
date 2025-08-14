@@ -37,7 +37,7 @@ export default function SignUpPage() {
   const { signUp, setActive } = useSignUp()
   
   // React Hook Form setup
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
+  const { register, handleSubmit, formState: { errors }, setValue, watch, trigger } = useForm({
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -67,6 +67,25 @@ export default function SignUpPage() {
     // Set loading state
     setIsLoading(true)
     setApiError(null)
+
+    // Manual validation for Select fields
+    if (!data.companySize) {
+      setApiError("Please select a company size")
+      setIsLoading(false)
+      return
+    }
+
+    if (!data.role) {
+      setApiError("Please select your role")
+      setIsLoading(false)
+      return
+    }
+
+    if (!data.acceptTerms) {
+      setApiError("You must accept the terms and conditions")
+      setIsLoading(false)
+      return
+    }
 
     try {
 
@@ -282,11 +301,9 @@ export default function SignUpPage() {
                 </label>
                 <Select
                   onValueChange={(value) => {
-                    setValue("companySize", value, { shouldValidate: true });
+                    setValue("companySize", value);
+                    trigger("companySize");
                   }}
-                  {...register("companySize", { 
-                    required: "Please select a company size" 
-                  })}
                 >
                   <SelectTrigger className={errors.companySize ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select company size" />
@@ -310,11 +327,9 @@ export default function SignUpPage() {
                 </label>
                 <Select
                   onValueChange={(value) => {
-                    setValue("role", value, { shouldValidate: true });
+                    setValue("role", value);
+                    trigger("role");
                   }}
-                  {...register("role", { 
-                    required: "Please select your role" 
-                  })}
                 >
                   <SelectTrigger className={errors.role ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select your role" />
@@ -403,9 +418,6 @@ export default function SignUpPage() {
                   id="acceptTerms" 
                   checked={acceptTerms} 
                   onCheckedChange={handleCheckboxChange} 
-                  {...register("acceptTerms", { 
-                    required: "You must accept the terms and conditions" 
-                  })}
                 />
                 <label
                   htmlFor="acceptTerms"
@@ -421,7 +433,7 @@ export default function SignUpPage() {
                   </Link>
                 </label>
               </div>
-              {errors.acceptTerms && <p className="text-xs text-red-500">You must accept the terms and conditions</p>}
+              
 
               {/* Submit button */}
               <Button type="submit" className="w-full" disabled={isLoading}>
