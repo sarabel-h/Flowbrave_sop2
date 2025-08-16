@@ -55,10 +55,21 @@ export default function SignUpPage() {
   // Watch values for validation
   const password = watch("password")
   const acceptTerms = watch("acceptTerms")
+  const companySize = watch("companySize")
+  const role = watch("role")
 
   // Handle checkbox change
   const handleCheckboxChange = (checked) => {
     setValue("acceptTerms", checked)
+  }
+
+  // Handle Select changes with validation
+  const handleCompanySizeChange = (value) => {
+    setValue("companySize", value, { shouldValidate: true })
+  }
+
+  const handleRoleChange = (value) => {
+    setValue("role", value, { shouldValidate: true })
   }
 
   // Form submission handler
@@ -68,21 +79,58 @@ export default function SignUpPage() {
     setIsLoading(true)
     setApiError(null)
 
-    // Manual validation for Select fields
+    // Enhanced validation before submission
+    const validationErrors = []
+
+    if (!data.firstName?.trim()) {
+      validationErrors.push("First name is required")
+    }
+
+    if (!data.lastName?.trim()) {
+      validationErrors.push("Last name is required")
+    }
+
+    if (!data.email?.trim()) {
+      validationErrors.push("Email is required")
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      validationErrors.push("Please enter a valid email address")
+    }
+
+    if (!data.organization?.trim()) {
+      validationErrors.push("Company name is required")
+    }
+
     if (!data.companySize) {
-      setApiError("Please select a company size")
-      setIsLoading(false)
-      return
+      validationErrors.push("Please select a company size")
     }
 
     if (!data.role) {
-      setApiError("Please select your role")
-      setIsLoading(false)
-      return
+      validationErrors.push("Please select your role")
+    }
+
+    if (!data.password) {
+      validationErrors.push("Password is required")
+    } else if (data.password.length < 8) {
+      validationErrors.push("Password must be at least 8 characters")
+    } else if (!/[a-zA-Z]/.test(data.password)) {
+      validationErrors.push("Password must contain at least one letter")
+    } else if (!/\d/.test(data.password)) {
+      validationErrors.push("Password must contain at least one number")
+    }
+
+    if (!data.confirmPassword) {
+      validationErrors.push("Please confirm your password")
+    } else if (data.password !== data.confirmPassword) {
+      validationErrors.push("Passwords do not match")
     }
 
     if (!data.acceptTerms) {
-      setApiError("You must accept the terms and conditions")
+      validationErrors.push("You must accept the terms and conditions")
+    }
+
+    // If there are validation errors, show them and stop
+    if (validationErrors.length > 0) {
+      setApiError(validationErrors[0])
       setIsLoading(false)
       return
     }
@@ -149,9 +197,33 @@ export default function SignUpPage() {
       console.error(error)
       
       if (isClerkAPIResponseError(error)) {
-        setApiError(error.errors[0].message)
+        // Improved error handling with more specific messages
+        const errorMessage = error.errors[0].message
+        
+        // Map common Clerk errors to user-friendly messages
+        if (errorMessage.includes("email") || errorMessage.includes("invalid")) {
+          setApiError("Please enter a valid email address")
+        } else if (errorMessage.includes("password") || errorMessage.includes("weak")) {
+          setApiError("Password must be at least 8 characters long and contain letters and numbers")
+        } else if (errorMessage.includes("already exists") || errorMessage.includes("taken")) {
+          setApiError("An account with this email already exists. Please try signing in instead.")
+        } else if (errorMessage.includes("first name") || errorMessage.includes("last name")) {
+          setApiError("Please enter your full name")
+        } else if (errorMessage.includes("is invalid")) {
+          // Handle generic "is invalid" messages
+          if (error.errors[0].code === "form_identifier_not_found") {
+            setApiError("Please enter a valid email address")
+          } else if (error.errors[0].code === "form_password_pwned") {
+            setApiError("This password is too common. Please choose a stronger password")
+          } else {
+            setApiError("Please check your information and try again")
+          }
+        } else {
+          // Fallback to original message if it's not empty
+          setApiError(errorMessage || "Registration failed. Please try again.")
+        }
       } else {
-        setApiError("Registration failed. Please try again.")
+        setApiError("Registration failed. Please check your connection and try again.")
       }
     }
 
@@ -222,6 +294,10 @@ export default function SignUpPage() {
                     minLength: {
                       value: 2,
                       message: "First name must be at least 2 characters"
+                    },
+                    validate: {
+                      notEmpty: (value) => value.trim() !== "" || "First name cannot be empty",
+                      noSpecialChars: (value) => /^[a-zA-Z\s]+$/.test(value) || "First name should only contain letters"
                     }
                   })}
                   />
@@ -243,6 +319,10 @@ export default function SignUpPage() {
                     minLength: {
                       value: 2,
                       message: "Last name must be at least 2 characters"
+                    },
+                    validate: {
+                      notEmpty: (value) => value.trim() !== "" || "Last name cannot be empty",
+                      noSpecialChars: (value) => /^[a-zA-Z\s]+$/.test(value) || "Last name should only contain letters"
                     }
                   })}
                   />
@@ -266,6 +346,13 @@ export default function SignUpPage() {
                     pattern: {
                       value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                       message: "Please enter a valid email address"
+                    },
+                    validate: {
+                      notEmpty: (value) => value.trim() !== "" || "Email cannot be empty",
+                      validFormat: (value) => {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                        return emailRegex.test(value) || "Please enter a valid email address"
+                      }
                     }
                   })}
                 />
@@ -288,6 +375,10 @@ export default function SignUpPage() {
                     minLength: {
                       value: 2,
                       message: "Company name must be at least 2 characters"
+                    },
+                    validate: {
+                      notEmpty: (value) => value.trim() !== "" || "Company name cannot be empty",
+                      validFormat: (value) => /^[a-zA-Z0-9\s&.-]+$/.test(value) || "Company name contains invalid characters"
                     }
                   })}
                 />
@@ -300,10 +391,7 @@ export default function SignUpPage() {
                   Company Size
                 </label>
                 <Select
-                  onValueChange={(value) => {
-                    setValue("companySize", value);
-                    trigger("companySize");
-                  }}
+                  onValueChange={handleCompanySizeChange}
                 >
                   <SelectTrigger className={errors.companySize ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select company size" />
@@ -318,6 +406,9 @@ export default function SignUpPage() {
                   </SelectContent>
                 </Select>
                 {errors.companySize && <p className="text-xs text-red-500">{errors.companySize.message}</p>}
+                {!companySize && !errors.companySize && (
+                  <p className="text-xs text-gray-500">Please select your company size</p>
+                )}
               </div>
 
               {/* Role in the company */}
@@ -326,10 +417,7 @@ export default function SignUpPage() {
                   Your Role
                 </label>
                 <Select
-                  onValueChange={(value) => {
-                    setValue("role", value);
-                    trigger("role");
-                  }}
+                  onValueChange={handleRoleChange}
                 >
                   <SelectTrigger className={errors.role ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select your role" />
@@ -347,6 +435,9 @@ export default function SignUpPage() {
                   </SelectContent>
                 </Select>
                 {errors.role && <p className="text-xs text-red-500">{errors.role.message}</p>}
+                {!role && !errors.role && (
+                  <p className="text-xs text-gray-500">Please select your role</p>
+                )}
               </div>
 
               {/* Password field */}
@@ -366,6 +457,14 @@ export default function SignUpPage() {
                       minLength: {
                         value: 8,
                         message: "Password must be at least 8 characters"
+                      },
+                      validate: {
+                        hasLetter: (value) => /[a-zA-Z]/.test(value) || "Password must contain at least one letter",
+                        hasNumber: (value) => /\d/.test(value) || "Password must contain at least one number",
+                        notCommon: (value) => {
+                          const commonPasswords = ['password', '123456', '12345678', 'qwerty', 'abc123']
+                          return !commonPasswords.includes(value.toLowerCase()) || "Please choose a stronger password"
+                        }
                       }
                     })}
                   />

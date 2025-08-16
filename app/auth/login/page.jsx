@@ -84,11 +84,33 @@ export default function LoginPage() {
 		// Handle errors
 		if (isClerkAPIResponseError(error)) {
 
-			setApiError(error.errors[0].message);
+			// Improved error handling with more specific messages
+			const errorMessage = error.errors[0].message
+			
+			// Map common Clerk errors to user-friendly messages
+			if (errorMessage.includes("not found") || errorMessage.includes("doesn't exist")) {
+				setApiError("No account found with this email address. Please check your email or create a new account.")
+			} else if (errorMessage.includes("password") || errorMessage.includes("credentials")) {
+				setApiError("Incorrect password. Please try again or reset your password.")
+			} else if (errorMessage.includes("email") || errorMessage.includes("invalid")) {
+				setApiError("Please enter a valid email address")
+			} else if (errorMessage.includes("is invalid")) {
+				// Handle generic "is invalid" messages
+				if (error.errors[0].code === "form_identifier_not_found") {
+					setApiError("No account found with this email address")
+				} else if (error.errors[0].code === "form_password_incorrect") {
+					setApiError("Incorrect password. Please try again")
+				} else {
+					setApiError("Please check your email and password")
+				}
+			} else {
+				// Fallback to original message if it's not empty
+				setApiError(errorMessage || "Sign in failed. Please try again.")
+			}
 
 		} else {
 
-			setApiError("Sign in failed. Please check your credentials and try again.");
+			setApiError("Sign in failed. Please check your connection and try again.");
 		}
     }
 
@@ -144,8 +166,15 @@ export default function LoginPage() {
 						{...register("email", { 
 						required: "Email is required", 
 						pattern: {
-							value: /\S+@\S+\.\S+/,
-							message: "Email is invalid"
+							value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+							message: "Please enter a valid email address"
+						},
+						validate: {
+							notEmpty: (value) => value.trim() !== "" || "Email cannot be empty",
+							validFormat: (value) => {
+								const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+								return emailRegex.test(value) || "Please enter a valid email address"
+							}
 						}
 						})}
 					/>
