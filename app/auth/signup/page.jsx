@@ -180,8 +180,7 @@ export default function SignUpPage() {
       console.error(error)
       
       if (isClerkAPIResponseError(error)) {
-        const err = error?.errors?.[0];
-        setApiError(err?.longMessage || err?.message || "Sign-up failed");
+        setApiError(error.errors?.[0]?.longMessage || error.errors?.[0]?.message || "Sign-up failed");
         return;
       } else {
         setApiError("Registration failed. Please check your connection and try again.")
@@ -210,10 +209,10 @@ export default function SignUpPage() {
               : "Create your account to get started with the platform."}
           </p>
           
-          {/* Information about invitation system */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-xs text-blue-700">
-              <strong>Note :</strong> Si vous avez reçu une invitation par email, veuillez utiliser le lien d'invitation à la place de ce formulaire.
+          {/* Welcome message */}
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-xs text-green-700">
+              <strong>Welcome !</strong> Create your account to get started with the platform.
             </p>
           </div>
         </div>
