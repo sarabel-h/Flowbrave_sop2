@@ -11,6 +11,7 @@ import Files from "@/components/Files";
 import useAuth from "@/components/auth";
 import Loading from "@/components/Loading";
 import Filters from "@/components/Filters";
+import AutoOnboard from "@/components/AutoOnboard";
 
 // Others
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -95,6 +96,9 @@ export default function FileManager() {
   return (
 
     <SidebarProvider>
+
+      {/* Auto-onboarding component */}
+      <AutoOnboard />
 
       {/* Main */}
       <div className="w-full flex h-screen bg-white">

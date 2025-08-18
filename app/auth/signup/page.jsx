@@ -20,6 +20,14 @@ import {
   SelectValue
 } from "@/components/ui/select"
 
+// util: sanitize email
+const sanitizeEmail = (v) =>
+  (v ?? '')
+    .normalize('NFKC')
+    .replace(/\u200B|\u00A0/g, '') // supprime ZWSP/NBSP
+    .trim()
+    .toLowerCase();
+
 export default function SignUpPage() {
 
   // Check if the user is already logged in
@@ -137,56 +145,31 @@ export default function SignUpPage() {
 
     try {
 
-      // Create a new sign-up
+      // Sauvegarde payload pour l'onboarding post-vérification
+      localStorage.setItem(
+        "onboardPayload",
+        JSON.stringify({
+          name: data.organization,
+          role: data.role,
+          companySize: data.companySize,
+        })
+      );
+
+      // Create a new sign-up (avec email nettoyé)
+      const cleanEmail = sanitizeEmail(data.email);
       const signUpAttempt = await signUp.create({
         firstName: data.firstName,
         lastName: data.lastName,
-        emailAddress: data.email,
+        emailAddress: cleanEmail,
         password: data.password,
-      })
+      });
 
       // Send email verification
       await signUpAttempt.prepareEmailAddressVerification({ strategy: "email_code" })
 
-      // Create organization and complete onboarding
+      // Désormais: on n'onboard PAS ici. On attend la vérification email.
       if (signUpAttempt.status === "needs_email_verification") {
-        
-        // Create organization
-        const onboarded = await fetch("/api/onboard", { 
-          method: "post", 
-          headers: { 'content-type': 'application/json' }, 
-          body: JSON.stringify({
-            name: data.organization, 
-            role: data.role, 
-            companySize: data.companySize
-          }) 
-        })
-        
-        if (onboarded.ok) {
-          const onboard = await onboarded.json()
-          const organizationId = onboard.data.publicMetadata.companyId
-          const userID = onboard.data.id
-      
-          // Create trial checkout
-          const checkoutResponse = await fetch("/api/trial", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              organization: organizationId,
-              userId: userID
-            })
-          })
-
-          if (checkoutResponse.ok) {
-            const { url } = await checkoutResponse.json()
-            window.location.replace(url)
-          } else {
-            // If checkout fails, redirect to home
-            window.location.replace("/")
-          }
-        }
-
-        setIsComplete(true)
+        setIsComplete(true); // affiche la page "check your email"
       } 
       else {
         setApiError("Registration incomplete. Please try again.")
@@ -197,31 +180,9 @@ export default function SignUpPage() {
       console.error(error)
       
       if (isClerkAPIResponseError(error)) {
-        // Improved error handling with more specific messages
-        const errorMessage = error.errors[0].message
-        
-        // Map common Clerk errors to user-friendly messages
-        if (errorMessage.includes("email") || errorMessage.includes("invalid")) {
-          setApiError("Please enter a valid email address")
-        } else if (errorMessage.includes("password") || errorMessage.includes("weak")) {
-          setApiError("Password must be at least 8 characters long and contain letters and numbers")
-        } else if (errorMessage.includes("already exists") || errorMessage.includes("taken")) {
-          setApiError("An account with this email already exists. Please try signing in instead.")
-        } else if (errorMessage.includes("first name") || errorMessage.includes("last name")) {
-          setApiError("Please enter your full name")
-        } else if (errorMessage.includes("is invalid")) {
-          // Handle generic "is invalid" messages
-          if (error.errors[0].code === "form_identifier_not_found") {
-            setApiError("Please enter a valid email address")
-          } else if (error.errors[0].code === "form_password_pwned") {
-            setApiError("This password is too common. Please choose a stronger password")
-          } else {
-            setApiError("Please check your information and try again")
-          }
-        } else {
-          // Fallback to original message if it's not empty
-          setApiError(errorMessage || "Registration failed. Please try again.")
-        }
+        const err = error?.errors?.[0];
+        setApiError(err?.longMessage || err?.message || "Sign-up failed");
+        return;
       } else {
         setApiError("Registration failed. Please check your connection and try again.")
       }
@@ -246,8 +207,15 @@ export default function SignUpPage() {
           <p className="mt-2 text-sm text-gray-600">
             {isComplete 
               ? "We've sent you a verification email. Please check your inbox and click the verification link to complete your registration." 
-              : "Get started with your free trial. No credit card required."}
+              : "Create your account to get started with the platform."}
           </p>
+          
+          {/* Information about invitation system */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-xs text-blue-700">
+              <strong>Note :</strong> Si vous avez reçu une invitation par email, veuillez utiliser le lien d'invitation à la place de ce formulaire.
+            </p>
+          </div>
         </div>
 
         <div className="rounded-lg border bg-white p-6 shadow-sm">
@@ -262,9 +230,14 @@ export default function SignUpPage() {
               <p className="text-sm text-gray-600 text-center">
                 Please check your email and click the verification link to complete your registration.
               </p>
-              <Button asChild className="mt-2">
-                <Link href="/auth/login">Back to Login</Link>
-              </Button>
+              <div className="flex gap-2">
+                <Button asChild>
+                  <Link href="/auth/login">Back to Login</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/">Go to Home</Link>
+                </Button>
+              </div>
             </div>
           ) : (
             // Registration form
@@ -341,19 +314,10 @@ export default function SignUpPage() {
                   autoComplete="email"
                   className={errors.email ? "border-red-300" : ""}
                   placeholder="name@company.com"
-                  {...register("email", { 
-                    required: "Email is required", 
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: "Please enter a valid email address"
-                    },
-                    validate: {
-                      notEmpty: (value) => value.trim() !== "" || "Email cannot be empty",
-                      validFormat: (value) => {
-                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-                        return emailRegex.test(value) || "Please enter a valid email address"
-                      }
-                    }
+                  {...register("email", {
+                    required: "Email is required",
+                    setValueAs: (v) => sanitizeEmail(v),
+                    validate: (v) => /^\S+@\S+\.\S+$/.test(v) || "Please enter a valid email address",
                   })}
                 />
                 {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
@@ -542,7 +506,7 @@ export default function SignUpPage() {
                     Creating account...
                   </>
                 ) : (
-                  "Start Free Trial"
+                  "Create Account"
                 )}
               </Button>
             </form>

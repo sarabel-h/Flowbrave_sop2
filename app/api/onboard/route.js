@@ -21,9 +21,16 @@ export async function POST(request) {
 
     // Get authentication status
     var { userId } = getAuth(request);
+    const actorId = userId || body.createdUserId;
+    if (!actorId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Create a new organization
-    var response = await (await clerkClient()).organizations.createOrganization({ name, createdBy: userId})
+    var response = await (await clerkClient()).organizations.createOrganization({ 
+      name, 
+      createdBy: actorId
+    })
 
     // Set the user's role and company size
     var metadata = await (await clerkClient()).users.updateUserMetadata(userId, { publicMetadata: { companyRole: role, companySize, companyId: response.id } });

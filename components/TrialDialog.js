@@ -18,16 +18,8 @@ function TrialDialog({ user }) {
      // Exit if user is not loaded
      if (!user) return;
 
-    // Get user organization data
-    var organization = user.organizationMemberships?.[0]?.organization
-
-    // Get billing details of the user
-    var billing = organization?.publicMetadata?.billing
-
-    // Trial should only show when billing is not set, new customer
-    // Temporarily disabled for development - uncomment the line below to re-enable
-    // if (!billing) 
-    //   trigger(true)
+    // STRIPE DISABLED - Trial dialog is disabled
+    // No trial dialog will be shown
 
   }, [])
 

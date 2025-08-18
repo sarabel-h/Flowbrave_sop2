@@ -18,16 +18,8 @@ function BillingCheck({ user }) {
      // Exit if user is not loaded
      if (!user) return;
 
-    // Get user organization data
-    var organization = user.organizationMemberships?.[0]?.organization
-
-    // Get billing details of the user
-    var billing = organization?.publicMetadata?.billing
-
-    // Trigger when user is not on a valid plan
-    if (billing?.status === "canceled")
-
-      trigger(true)
+    // STRIPE DISABLED - Billing check is disabled
+    // No billing checks will be performed
 
   }, [])
 
