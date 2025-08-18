@@ -165,7 +165,7 @@ export default function SignUpPage() {
       });
 
       // Send email verification
-      await signUpAttempt.prepareEmailAddressVerification({ strategy: "email_code" })
+      await signUpAttempt.prepareEmailAddressVerification({ strategy: "email_link" })
 
       // Désormais: on n'onboard PAS ici. On attend la vérification email.
       if (signUpAttempt.status === "needs_email_verification") {
